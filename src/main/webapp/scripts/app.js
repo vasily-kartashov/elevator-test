@@ -42,12 +42,8 @@ app.controller('FormController', ['$scope', '$http',
 
         $scope.data = {};
         $scope.call = function(from) {
-            var data = {
-                from: from,
-                to: $scope.data.to,
-                passengers: $scope.data.passengers
-            }
-            $http.post('/service/call', data).success(function(data, status, headers, config) {
+            $scope.data.from = from;
+            $http.post('/service/call', $scope.data).success(function(data, status, headers, config) {
                 $scope.data = {};
             });
         }
