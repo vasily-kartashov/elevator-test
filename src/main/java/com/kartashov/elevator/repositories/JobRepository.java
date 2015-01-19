@@ -6,5 +6,6 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface JobRepository extends CrudRepository<Job, Integer> {
 
-    Job findByElevator(Elevator elevator);
+    Job findTopByElevator(Elevator elevator);
+
 }

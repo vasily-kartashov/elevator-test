@@ -23,6 +23,7 @@ public class MainController {
     @RequestMapping("/")
     public String welcome(Map<String, Object> model) {
         model.put("numberOfLevels", numberOfLevels);
+        model.put("elevatorPositions", scheduler.getElevatorPositions());
         return "index";
     }
 }

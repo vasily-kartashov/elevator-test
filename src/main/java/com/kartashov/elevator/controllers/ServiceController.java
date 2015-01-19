@@ -18,12 +18,10 @@ public class ServiceController {
         this.scheduler = scheduler;
     }
 
-    /*
     @RequestMapping("/service/state")
-    public ApplicationData getState() {
-        return new ApplicationData(scheduler);
+    public Scheduler getState() {
+        return scheduler;
     }
-    */
 
     @RequestMapping(value = "/service/call", method = RequestMethod.POST)
     public void call(@RequestBody BatchRequest request) {

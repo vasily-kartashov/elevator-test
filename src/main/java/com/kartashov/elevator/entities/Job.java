@@ -7,7 +7,7 @@ import javax.persistence.*;
 @Entity
 public class Job {
 
-    public enum State { DONE, ACTIVE, OUTSTANDING }
+    public enum State { ACTIVE, OUTSTANDING }
 
     @Id
     @GeneratedValue

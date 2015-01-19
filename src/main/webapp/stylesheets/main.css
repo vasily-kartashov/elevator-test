@@ -1,0 +1,68 @@
+body {
+    font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+    padding: 10px;
+}
+table {
+    width: 100%;
+    border-top:1px solid #e5eff8;
+    border-right:1px solid #e5eff8;
+    border-collapse:collapse;
+}
+div.alert {
+    width: 100%;
+    background-color: fef4f9;
+    text-align: center;
+    margin-top: 10px;
+    padding: 10px 0;
+}
+td {
+    color:#678197;
+    border-bottom:1px solid #e5eff8;
+    border-left:1px solid #e5eff8;
+    padding: 10px 15px;
+    text-align:center;
+}
+tr:nth-child(odd) td {
+    background:#f4f9fe;
+}
+thead {
+    border: 1px solid #e5eff8;
+}
+thead th {
+    background: #f4f9fe;
+    text-align: center;
+    color: #66a3d3;
+    padding: 10px 20px;
+}
+th {
+    width: 60px;
+}
+th.elevator {
+    width: 80px;
+}
+td.form {
+    width: 150px;
+}
+td.form select {
+    width: 40px;
+}
+td input {
+    width: 40px;
+}
+td span {
+    background-color: #66a3d3;
+    color: #ffffff;
+    padding: 3px 7px 3px 30px;
+    border-radius: 3px;
+    background-repeat: no-repeat;
+    background-position: left 3px center;
+}
+td span.elevator-steady {
+    background-image: url('../images/steady.png');
+}
+td span.elevator-up {
+    background-image: url('../images/arrow-up.png');
+}
+td span.elevator-down {
+    background-image: url('../images/arrow-down.png');
+}

@@ -1,5 +1,6 @@
 package com.kartashov.elevator.components;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.kartashov.elevator.entities.Elevator;
 import com.kartashov.elevator.entities.Job;
 import com.kartashov.elevator.repositories.ElevatorRepository;
@@ -10,9 +11,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Component
 @Transactional
@@ -22,6 +21,7 @@ public class Scheduler {
     private final int maxCapacity;
     private final JobRepository jobRepository;
     private final ElevatorRepository elevatorRepository;
+    private final Map<Character, Elevator.Position> elevatorPositions;
 
     @Autowired
     public Scheduler(JobRepository jobRepository,
@@ -34,16 +34,19 @@ public class Scheduler {
         }
         this.jobRepository = jobRepository;
         this.elevatorRepository = elevatorRepository;
+        this.elevatorPositions = new LinkedHashMap<>();
         for (int i = 0; i < elevatorsCount; i++) {
             char id = (char) ('A' + i);
             Elevator elevator = elevatorRepository.findOne(id);
             if (elevator == null) {
                 elevator = new Elevator(id);
                 elevatorRepository.save(elevator);
+                elevatorPositions.put(id, elevator.getPosition());
             }
         }
         this.elevatorsCount = elevatorsCount;
         this.maxCapacity = maxCapacity;
+
     }
 
     public void call(BatchRequest batchRequest) {
@@ -52,10 +55,15 @@ public class Scheduler {
         }
     }
 
+    @JsonValue
+    public Map<Character, Elevator.Position> getElevatorPositions() {
+        return elevatorPositions;
+    }
+
     @Scheduled(fixedRate = 1000)
     public void process() {
         for (Elevator elevator : elevatorRepository.findAll()) {
-            Job job = jobRepository.findByElevator(elevator);
+            Job job = jobRepository.findTopByElevator(elevator);
             if (job != null) {
                 if (job.getState() != Job.State.ACTIVE) {
                     job.setState(Job.State.ACTIVE);
@@ -65,6 +73,7 @@ public class Scheduler {
                     jobRepository.delete(job);
                 }
                 elevatorRepository.save(elevator);
+                elevatorPositions.put(elevator.getId(), elevator.getPosition(job));
             }
         }
     }
