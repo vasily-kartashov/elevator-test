@@ -1,8 +1,5 @@
 package com.kartashov.elevator.components;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Request {
 
     private final int from;

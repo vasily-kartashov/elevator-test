@@ -9,9 +9,11 @@ app.controller('TableController', ['$scope', '$http', '$interval', '$interpolate
         $interval(function() {
             $http.get('/service/state').success(function(data, status, headers, config) {
                 for (var id in data) {
-                    if (!elevators.hasOwnProperty(id) || !angular.equals(data[id], elevators[id])) {
-                        $scope.widgets[id] = updateWidgets(data[id], elevators[id]);
-                        elevators[id] = data[id];
+                    if (data.hasOwnProperty(id)) {
+                        if (!elevators.hasOwnProperty(id) || !angular.equals(data[id], elevators[id])) {
+                            $scope.widgets[id] = updateWidgets(data[id], elevators[id]);
+                            elevators[id] = data[id];
+                        }
                     }
                 }
             });
@@ -27,18 +29,23 @@ app.controller('TableController', ['$scope', '$http', '$interval', '$interpolate
     }
 ]);
 
+app.filter('range', function() {
+    return function(input) {
+        var start = parseInt(input[0]);
+        var end = parseInt(input[1]);
+        var skip = parseInt(input[2]);
+        var result = [];
+        for (var i = start; i <= end; i++) {
+            if (i != skip) {
+                result.push(i);
+            }
+        }
+        return result;
+    }
+});
+
 app.controller('FormController', ['$scope', '$http',
     function($scope, $http) {
-
-        $scope.levels = function(start, end, skip) {
-            var result = [];
-            for (var i = start; i <= end; i++) {
-                if (i != skip) {
-                    result.push(i);
-                }
-            }
-            return result;
-        };
 
         $scope.data = {};
         $scope.call = function(from) {

@@ -22,7 +22,7 @@
                         <td>${level + 1}</td>
                     	<td ng-form="${form}" ng-controller="FormController" class="form">
                             <input type="number" min="1" max="100" required="true" ng-model="data.passengers"/>
-                            <select ng-options="(a + 1) for a in levels(0, ${numberOfLevels - 1}, ${level})"
+                            <select ng-options="(a + 1) for a in [0, ${numberOfLevels - 1}, ${level}] | range"
                                     required="true" ng-model="data.to"></select>
                             <button ng-disabled="${form}.$invalid" ng-click="call(${level})">Call</button>
                         </td>
