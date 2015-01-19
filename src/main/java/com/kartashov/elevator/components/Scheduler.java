@@ -113,6 +113,7 @@ public class Scheduler {
             }
             if (job == null) {
                 job = new Job(elevator, request);
+                score = Math.abs(request.getFrom() - elevator.getLevel());
             }
         }
 
