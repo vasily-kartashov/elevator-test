@@ -41,12 +41,12 @@ public class Job {
         this.to = request.getTo();
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public Job(Elevator elevator, int from, int to, int passengers) {
+        this();
+        this.elevator = elevator;
+        this.from = from;
+        this.to = to;
+        this.passengers = passengers;
     }
 
     public Elevator getElevator() {
@@ -69,24 +69,12 @@ public class Job {
         return from;
     }
 
-    public void setFrom(Integer from) {
-        this.from = from;
-    }
-
     public Integer getTo() {
         return to;
     }
 
-    public void setTo(Integer to) {
-        this.to = to;
-    }
-
     public Integer getPassengers() {
         return passengers;
-    }
-
-    public void setPassengers(Integer passengers) {
-        this.passengers = passengers;
     }
 
     public void addPassenger() {

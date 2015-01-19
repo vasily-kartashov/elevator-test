@@ -8,9 +8,10 @@
     	    <thead>
                 <tr>
                     <th>Floor</th>
+                    <th>Waiting</th>
                     <th>Target level</th>
-                    <c:forEach items="${elevatorPositions}" var="elevatorPosition">
-                        <th class="elevator">${elevatorPosition.key}</th>
+                    <c:forEach items="${feedData.getElevators()}" var="elevator">
+                        <th class="elevator">${elevator.key}</th>
                     </c:forEach>
                 <tr>
             </thead>
@@ -20,14 +21,14 @@
                     <c:set var="form" value="callForm${level}"/>
                     <tr>
                         <td>${level + 1}</td>
+                        <td ng-bind="waiting[${level}]"></td>
                     	<td ng-form="${form}" ng-controller="FormController" class="form">
-                            <input type="number" min="1" max="100" required="true" ng-model="data.passengers"/>
-                            <select ng-options="(a + 1) for a in [0, ${numberOfLevels - 1}, ${level}] | range"
-                                    required="true" ng-model="data.to"></select>
+                            People: <input type="number" pattern="\d+" min="1" max="${maxRequest}" required="true" ng-model="data.passengers"/>
+                            Target: <select ng-options="(a + 1) for a in [0, ${numberOfLevels - 1}, ${level}] | range" required="true" ng-model="data.to"></select>
                             <button ng-disabled="${form}.$invalid" ng-click="call(${level})">Call</button>
                         </td>
-                    	<c:forEach items="${elevatorPositions}" var="elevatorPosition">
-                            <td ng-bind-html="widgets['${elevatorPosition.key}'][${level}]"></td>
+                    	<c:forEach items="${feedData.getElevators()}" var="elevator">
+                            <td ng-bind-html="widgets['${elevator.key}'][${level}]"></td>
                         </c:forEach>
                 </c:forEach>
             </tbody>

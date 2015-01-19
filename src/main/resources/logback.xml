@@ -4,5 +4,11 @@
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.apache" level="WARN"/>
     <logger name="com.kartashov.elevator" level="ALL"/>
-    <logger name="h2database" level="ALL"/>
+    <!--
+         It is beneficial to set logging level to INFO
+         to see what kind of queries the JPA sends to the database.
+         Generally it requires some fine tuning till you find the
+         best JPA configuration
+    -->
+    <logger name="h2database" level="WARN"/>
 </configuration>

@@ -22,13 +22,13 @@ public class Elevator {
      * <li>{@code EXITING} the elevator has reached the destination and people are exiting it
      * </ul>
      */
-    public enum State { IDLE, CALLING, BOARDING, CARRYING, EXITING }
+    public enum State { IDLE, CALLING, BOARDING, CARRYING, State, EXITING }
 
     @Id
     private Character id;
 
-    @OneToMany(fetch = FetchType.LAZY, mappedBy = "elevator")
-    private List<com.kartashov.elevator.entities.Job> jobs = new ArrayList<>();
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "elevator")
+    private List<Job> jobs = new ArrayList<>();
 
     @Column
     @Enumerated(EnumType.STRING)
@@ -55,6 +55,14 @@ public class Elevator {
         return jobs;
     }
 
+    public boolean hasJobs() {
+        return !jobs.isEmpty();
+    }
+
+    public Job getTopJob() {
+        return jobs.get(0);
+    }
+
     public State getState() {
         return state;
     }
@@ -63,11 +71,23 @@ public class Elevator {
         return level;
     }
 
-    public boolean update(Job job) {
+    /**
+     * Update the state of the elevator.
+     *
+     * @return flag if the current job is done and can be removed from the database
+     * @throws java.lang.IllegalStateException if the top job in the queue is not active.
+     *         There is very little an elevator can do about it, as this is usually
+     *         an indication of some programming error.
+     */
+    public boolean update() {
+        Job job = getTopJob();
+        if (job.getState() != Job.State.ACTIVE) {
+            throw new IllegalStateException("The top job is not active");
+        }
         switch (state) {
             case IDLE:
                 state = State.CALLING;
-                return false;
+                // intentional fall through
             case CALLING:
                 if (job.getFrom().equals(level)) {
                     logger.info("Elevator {}: {} passengers are entering on level {}", id, job.getPassengers(), level);
@@ -104,60 +124,7 @@ public class Elevator {
     }
 
     @Override
-    public boolean equals(Object o) {
-        return o instanceof Elevator && ((Elevator) o).id.equals(id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
-    }
-
-    @Override
     public String toString() {
         return String.format("Elevator %s is in state %s on level %d", id, state, level);
-    }
-
-    public Position getPosition() {
-        return new Position(level, "steady", 0);
-    }
-
-    public Position getPosition(Job job) {
-        String direction = "steady";
-        int passengers = 0;
-        if (state == State.CALLING) {
-            direction = level < job.getFrom() ? "up" : (level > job.getFrom() ? "down" : "steady");
-        } else if (state == State.CARRYING) {
-            direction = level < job.getTo() ? "up" : (level > job.getTo() ? "down" : "steady");
-            passengers = job.getPassengers();
-        } else if (state == State.EXITING) {
-            passengers = job.getPassengers();
-        }
-        return new Position(level, direction, passengers);
-    }
-
-    public static class Position {
-
-        private final int level;
-        private final String direction;
-        private final int passengers;
-
-        public Position(int level, String direction, int passengers) {
-            this.level = level;
-            this.direction = direction;
-            this.passengers = passengers;
-        }
-
-        public int getLevel() {
-            return level;
-        }
-
-        public String getDirection() {
-            return direction;
-        }
-
-        public int getPassengers() {
-            return passengers;
-        }
     }
 }

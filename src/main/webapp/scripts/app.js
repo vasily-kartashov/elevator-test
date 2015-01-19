@@ -4,45 +4,31 @@ app.controller('TableController', ['$scope', '$http', '$interval', '$interpolate
     function($scope, $http, $interval, $interpolate, $sce) {
 
         $scope.widgets = {};
+        $scope.waiting = {};
 
         var elevators = {};
+        var template = $interpolate('<span class="elevator-{{direction}}">{{passengers}}</span>');
         $interval(function() {
-            $http.get('/service/state').success(function(data, status, headers, config) {
-                for (var id in data) {
-                    if (data.hasOwnProperty(id)) {
-                        if (!elevators.hasOwnProperty(id) || !angular.equals(data[id], elevators[id])) {
-                            $scope.widgets[id] = updateWidgets(data[id], elevators[id]);
-                            elevators[id] = data[id];
+            $http.get('/service/feed').success(function(data, status, headers, config) {
+                if (data.hasOwnProperty('elevators')) {
+                    for (var id in data.elevators) {
+                        if (data.elevators.hasOwnProperty(id)) {
+                            if (!elevators.hasOwnProperty(id) || !angular.equals(data.elevators[id], elevators[id])) {
+                                elevators[id] = data.elevators[id];
+                                var s = {};
+                                s[elevators[id].level] = $sce.trustAsHtml(template(elevators[id]));
+                                $scope.widgets[id] = s;
+                            }
                         }
                     }
                 }
+                if (data.hasOwnProperty('waiting')) {
+                    $scope.waiting = data.waiting;
+                }
             });
         }, 500);
-
-        var template = $interpolate('<span class="elevator-{{direction}}">{{passengers}}</span>');
-        var updateWidgets = function(after, before) {
-            var scope = {};
-            if (before && before.hasOwnProperty('level')) scope[before.level] = '';
-            if (after) scope[after.level] = $sce.trustAsHtml(template(after));
-            return scope;
-        }
     }
 ]);
-
-app.filter('range', function() {
-    return function(input) {
-        var start = parseInt(input[0]);
-        var end = parseInt(input[1]);
-        var skip = parseInt(input[2]);
-        var result = [];
-        for (var i = start; i <= end; i++) {
-            if (i != skip) {
-                result.push(i);
-            }
-        }
-        return result;
-    }
-});
 
 app.controller('FormController', ['$scope', '$http',
     function($scope, $http) {
@@ -56,3 +42,15 @@ app.controller('FormController', ['$scope', '$http',
         }
     }
 ]);
+
+app.filter('range', function() {
+    return function(args) {
+        var result = [];
+        for (var i = args[0]; i <= args[1]; i++) {
+            if (i != args[2]) {
+                result.push(i);
+            }
+        }
+        return result;
+    }
+});

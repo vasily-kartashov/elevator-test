@@ -1,6 +1,5 @@
 package com.kartashov.elevator.components;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.kartashov.elevator.entities.Elevator;
 import com.kartashov.elevator.entities.Job;
 import com.kartashov.elevator.repositories.ElevatorRepository;
@@ -11,8 +10,29 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+/**
+ * Scheduler is used to distribute incoming jobs among registered elevators in an optimal manner.
+ *
+ * The responsibility of a scheduler is to establish the connection to the elevators,
+ * manage the jobs queue for every elevator, by picking the best elevator and bungling
+ * as many individual requests into elevator trips as possible.
+ *
+ * There are many considerations that might influence the final design of the implementation
+ * <ul>
+ * <li>One may decide to distribute people among elevators as evenly as possible instead of trying
+ *     to squeeze the max capacity into every lift
+ * <li>One may decide to give late arriving people priority if their request aligns with already scheduled jobs
+ * <li>One may decide to interrupt existing jobs to let additional people in
+ * </ul>
+ *
+ * The general solution might be quite elaborate and needs to be driven by real statistical data,
+ * and should probably incorporate more data, like bearding and exiting times,
+ * probability of elevator failure and so on.
+ */
 @Component
 @Transactional
 public class Scheduler {
@@ -21,8 +41,13 @@ public class Scheduler {
     private final int maxCapacity;
     private final JobRepository jobRepository;
     private final ElevatorRepository elevatorRepository;
-    private final Map<Character, Elevator.Position> elevatorPositions;
 
+    /**
+     * Create a scheduler.
+     *
+     * The responsibility of the scheduler are to manage elevators and job queues.
+     * On start time we check that the database contains records for every elevator.
+     */
     @Autowired
     public Scheduler(JobRepository jobRepository,
                      ElevatorRepository elevatorRepository,
@@ -34,14 +59,12 @@ public class Scheduler {
         }
         this.jobRepository = jobRepository;
         this.elevatorRepository = elevatorRepository;
-        this.elevatorPositions = new LinkedHashMap<>();
         for (int i = 0; i < elevatorsCount; i++) {
             char id = (char) ('A' + i);
             Elevator elevator = elevatorRepository.findOne(id);
             if (elevator == null) {
                 elevator = new Elevator(id);
                 elevatorRepository.save(elevator);
-                elevatorPositions.put(id, elevator.getPosition());
             }
         }
         this.elevatorsCount = elevatorsCount;
@@ -49,92 +72,51 @@ public class Scheduler {
 
     }
 
+    /**
+     * Call a batch request.
+     */
     public void call(BatchRequest batchRequest) {
         for (Request request : batchRequest) {
             call(request);
         }
     }
 
-    @JsonValue
-    public Map<Character, Elevator.Position> getElevatorPositions() {
-        return elevatorPositions;
-    }
-
+    /**
+     * Process job queues of each elevator.
+     *
+     * If the top job in the queue is not active we activate it.
+     * If the elevator says it's done updating current job, we remove it from the queue.
+     * It also the responsibility of the scheduler to persist all the changes to elevator's and jobs' statuses.
+     */
     @Scheduled(fixedRate = 1000)
     public void process() {
         for (Elevator elevator : elevatorRepository.findAll()) {
-            Job job = jobRepository.findTopByElevator(elevator);
-            if (job != null) {
+            if (elevator.hasJobs()) {
+                Job job = elevator.getTopJob();
                 if (job.getState() != Job.State.ACTIVE) {
                     job.setState(Job.State.ACTIVE);
                     jobRepository.save(job);
                 }
-                if (elevator.update(job)) {
+                if (elevator.update()) {
                     jobRepository.delete(job);
+                    elevator.getJobs().remove(job);
                 }
                 elevatorRepository.save(elevator);
-                elevatorPositions.put(elevator.getId(), elevator.getPosition(job));
             }
         }
     }
 
+    /**
+     * Find the best queue for a new job request.
+     */
     private void call(Request request) {
         List<Placement> placements = new ArrayList<>(elevatorsCount);
-        Iterable<Job> jobs = jobRepository.findAll();
         for (Elevator elevator : elevatorRepository.findAll()) {
-            placements.add(new Placement(request, jobs, elevator, maxCapacity));
+            placements.add(new Placement(elevator, request, maxCapacity));
         }
         Collections.sort(placements);
         Job job = placements.get(0).getJob();
         job.addPassenger();
         jobRepository.save(job);
-    }
-
-    private static class Placement implements Comparable<Placement> {
-
-        private Job job;
-        private int score;
-
-        private Placement(Request request, Iterable<Job> jobs, Elevator elevator, int maxCapacity) {
-            for (Job job : jobs) {
-                if (job.getElevator().equals(elevator)) {
-                    if (job.getState() == Job.State.ACTIVE) {
-                        if (elevator.getState() == Elevator.State.CALLING) {
-                            score += Math.abs(elevator.getLevel() - job.getFrom());
-                        } else if (elevator.getState() == Elevator.State.CARRYING) {
-                            score += Math.abs(elevator.getLevel() - job.getTo());
-                        }
-                    } else if (accepts(job, request, maxCapacity)) {
-                        this.job = job;
-                    } else {
-                        score += Math.abs(job.getTo() - job.getFrom());
-                    }
-                }
-            }
-            if (job == null) {
-                job = new Job(elevator, request);
-                score = Math.abs(request.getFrom() - elevator.getLevel());
-            }
-        }
-
-        public Job getJob() {
-            return job;
-        }
-
-        @Override
-        public int compareTo(Placement o) {
-            return Integer.compare(score, o.score);
-        }
-
-        private boolean accepts(Job job, Request request, int maxCapacity) {
-            return job.getFrom() == request.getFrom()
-                    && job.getTo() == request.getTo()
-                    && job.getPassengers() < maxCapacity;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("Score is %d", score);
-        }
     }
 }

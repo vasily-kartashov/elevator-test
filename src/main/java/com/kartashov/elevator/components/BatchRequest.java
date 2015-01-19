@@ -2,6 +2,10 @@ package com.kartashov.elevator.components;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.validation.Errors;
+import org.springframework.validation.Validator;
 
 import java.util.Iterator;
 
@@ -32,14 +36,15 @@ public class BatchRequest extends Request implements Iterable<Request> {
     }
 
     /**
-     * Get number of passengers in the request
-     *
-     * @return number of passengers
+     * Get number of passengers
      */
     public int getPassengers() {
         return passengers;
     }
 
+    /**
+     * A view of the batch request as an iterable collection of individual requests.
+     */
     @Override
     public Iterator<Request> iterator() {
 

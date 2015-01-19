@@ -1,5 +1,11 @@
 package com.kartashov.elevator.components;
 
+/**
+ * Single journey request.
+ *
+ * Even when we get a group request to travel, we treat it as a sequence of individual requests,
+ * and split them in the optimal manner.
+ */
 public class Request {
 
     private final int from;
