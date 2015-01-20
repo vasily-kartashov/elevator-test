@@ -9,8 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Feed to the application state. The information contained is fetched from the database
@@ -40,6 +39,15 @@ public class Feed {
             }
         }
         return new FeedData(elevators, waiting);
+    }
+
+    public List<Character> getElevators() {
+        List<Character> elevators = new ArrayList<>();
+        for (Elevator elevator : elevatorRepository.findAll()) {
+            elevators.add(elevator.getId());
+        }
+        Collections.sort(elevators);
+        return elevators;
     }
 
     public static class FeedData {

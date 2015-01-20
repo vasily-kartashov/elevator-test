@@ -10,8 +10,8 @@
                     <th>Floor</th>
                     <th>Waiting</th>
                     <th>Target level</th>
-                    <c:forEach items="${feedData.getElevators()}" var="elevator">
-                        <th class="elevator">${elevator.key}</th>
+                    <c:forEach items="${elevators}" var="elevator">
+                        <th class="elevator">${elevator}</th>
                     </c:forEach>
                 <tr>
             </thead>
@@ -27,13 +27,19 @@
                             Target: <select ng-options="(a + 1) for a in [0, ${numberOfLevels - 1}, ${level}] | range" required="true" ng-model="data.to"></select>
                             <button ng-disabled="${form}.$invalid" ng-click="call(${level})">Call</button>
                         </td>
-                    	<c:forEach items="${feedData.getElevators()}" var="elevator">
-                            <td ng-bind-html="widgets['${elevator.key}'][${level}]"></td>
+                    	<c:forEach items="${elevators}" var="elevator">
+                            <td ng-bind-html="widgets['${elevator}'][${level}]"></td>
                         </c:forEach>
                 </c:forEach>
             </tbody>
         </table>
         <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.8/angular.js"></script>
+        <script>
+            window.__settings = {
+                numberOfLevels: ${numberOfLevels},
+                elevatorNames: [<c:forEach items="${elevators}" var="elevator">'${elevator}',</c:forEach>]
+            };
+        </script>
         <script src="/scripts/app.js"></script>
     </body>
 </html>

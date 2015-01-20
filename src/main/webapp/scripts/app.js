@@ -3,26 +3,62 @@ var app = angular.module('elevatorApp', []);
 app.controller('TableController', ['$scope', '$http', '$interval', '$interpolate', '$sce',
     function($scope, $http, $interval, $interpolate, $sce) {
 
+        /**
+         * The elevators data arriving from the rest endpoint,
+         * no need to keep it in scope as this is not watched.
+         */
+        var elevators = {};
+
+        /**
+         * The set of elevator widgets (little box with.
+         */
         $scope.widgets = {};
+
+        /**
+         * Initialise the set of elevators to skip has own properties check
+         * Initialise the set of widgets to be sure the target cell of specific
+         * widget exists in the $scope widgets
+         */
+        (function() {
+            var settings = window.__settings;
+            var widgets = {};
+            for (var i in settings.elevatorNames) {
+                var elevatorName = settings.elevatorNames[i];
+                elevators[elevatorName] = { level: 0 };
+                widgets[elevatorName] = [];
+                for (var level = 0; level < settings.numberOfLevels; level++) {
+                    widgets[elevatorName][level] = '';
+                }
+            }
+            $scope.widgets = widgets;
+        }());
+
+        /**
+         *
+         */
         $scope.waiting = {};
 
-        var elevators = {};
+        /**
+         * Get the latest feed, check if the elevators state as well as the waiting list updates have arrived.
+         */
         var template = $interpolate('<span class="elevator-{{direction}}">{{passengers}}</span>');
         $interval(function() {
             $http.get('/service/feed').success(function(data, status, headers, config) {
                 if (data.hasOwnProperty('elevators')) {
                     for (var id in data.elevators) {
-                        if (data.elevators.hasOwnProperty(id)) {
-                            if (!elevators.hasOwnProperty(id) || !angular.equals(data.elevators[id], elevators[id])) {
-                                elevators[id] = data.elevators[id];
-                                var s = {};
-                                s[elevators[id].level] = $sce.trustAsHtml(template(elevators[id]));
-                                $scope.widgets[id] = s;
-                            }
+                        // If here is a new data regarding the elevator[id]
+                        if (!angular.equals(data.elevators[id], elevators[id])) {
+                            // remove the old widget
+                            $scope.widgets[id][elevators[id].level] = '';
+                            // render the new widget
+                            $scope.widgets[id][data.elevators[id].level] = $sce.trustAsHtml(template(data.elevators[id]));
+                            // replace the old data with the new data
+                            elevators[id] = data.elevators[id];
                         }
                     }
                 }
                 if (data.hasOwnProperty('waiting')) {
+                    // Update the waiting list
                     $scope.waiting = data.waiting;
                 }
             });
@@ -33,6 +69,9 @@ app.controller('TableController', ['$scope', '$http', '$interval', '$interpolate
 app.controller('FormController', ['$scope', '$http',
     function($scope, $http) {
 
+        /**
+         * Call the elevator.
+         */
         $scope.data = {};
         $scope.call = function(from) {
             $scope.data.from = from;
@@ -43,6 +82,9 @@ app.controller('FormController', ['$scope', '$http',
     }
 ]);
 
+/**
+ * Simple range filter to generate a list of numbers with one number skipped.
+ */
 app.filter('range', function() {
     return function(args) {
         var result = [];
@@ -54,3 +96,13 @@ app.filter('range', function() {
         return result;
     }
 });
+
+/**
+ * Disable caching in Internet Explorer
+ */
+app.config(['$httpProvider', function($httpProvider) {
+    if (!$httpProvider.defaults.headers.get) {
+        $httpProvider.defaults.headers.get = {};
+    }
+    $httpProvider.defaults.headers.get['If-Modified-Since'] = '0';
+}]);

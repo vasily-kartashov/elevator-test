@@ -12,21 +12,22 @@ import java.util.Map;
 public class MainController {
 
     private final Feed feed;
-    private final int numberOfLevels;
     private final int maxRequest;
+    private final int numberOfLevels;
 
     @Autowired
     public MainController(Feed feed,
-                          @Value("${elevator.levels}") int numberOfLevels,
-                          @Value("${elevator.max-request}") int maxRequest) {
+                          @Value("${elevator.max-request}") int maxRequest,
+                          @Value("${elevator.levels}") int numberOfLevels) {
         this.feed = feed;
-        this.numberOfLevels = numberOfLevels;
         this.maxRequest = maxRequest;
+        this.numberOfLevels = numberOfLevels;
     }
 
     @RequestMapping("/")
     public String welcome(Map<String, Object> model) {
         model.put("numberOfLevels", numberOfLevels);
+        model.put("elevators", feed.getElevators());
         model.put("maxRequest", maxRequest);
         model.put("feedData", feed.getFeedData());
         return "index";
