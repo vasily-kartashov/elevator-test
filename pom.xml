@@ -5,6 +5,7 @@
 
     <groupId>com.kartashov.elevator</groupId>
     <artifactId>elevator-manager</artifactId>
+    <packaging>war</packaging>
     <version>0.1.0</version>
 
     <parent>
@@ -29,6 +30,11 @@
         <dependency>
             <groupId>org.apache.tomcat.embed</groupId>
             <artifactId>tomcat-embed-jasper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
